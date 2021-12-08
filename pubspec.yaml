@@ -1,6 +1,6 @@
 name: screenshot_detect
 description: iOS-only screenshot detection.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/glebosotov/flutter-screenshot-callback
 
 environment:

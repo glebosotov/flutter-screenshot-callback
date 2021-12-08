@@ -9,19 +9,19 @@ This is an iOS-only plugin for detecting when user takes a screenshot through `U
 - Import the package
 
   ```dart
-  import 'package:screenshot_callback/screenshot_callback.dart';
+  import 'package:screenshot_detect/screenshot_detect.dart';
   ```
 
-- Create an `ScreenshotCallback` instance 
+- Create a `ScreenshotDetect` instance 
 
   ```dart
-   final ScreenshotCallback screenshotCallback = ScreenshotCallback();
+   final ScreenshotDetect screenshotDetect = ScreenshotDetect();
   ```
 
 - Add an observer
 
   ```dart
-   screenshotCallback.addListener(() {
+   screenshotDetect.addListener(() {
      		print('Taken screenshot')
         exampleFunction();
       });
@@ -32,7 +32,7 @@ This is an iOS-only plugin for detecting when user takes a screenshot through `U
   ```dart
     @override
     void dispose() {
-      screenshotCallback.dispose();
+      screenshotDetect.dispose();
       super.dispose();
     }
   ```

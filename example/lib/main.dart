@@ -19,7 +19,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final ScreenshotDetect screenshotCallback = ScreenshotDetect();
+  final ScreenshotDetect screenshotDetect = ScreenshotDetect();
   var screenshotKey = GlobalKey();
   Uint8List? latestImage;
 
@@ -31,12 +31,12 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    screenshotCallback.dispose();
+    screenshotDetect.dispose();
     super.dispose();
   }
 
   Future<void> initScreenshotCallback() async {
-    screenshotCallback.addListener(() {
+    screenshotDetect.addListener(() {
       screenshot();
     });
   }
