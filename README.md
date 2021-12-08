@@ -1,15 +1,44 @@
 # screenshot_detect
 
-A new flutter plugin project.
+This is an iOS-only plugin for detecting when user takes a screenshot through `UIApplication.userDidTakeScreenshotNotification`. It was heavily inspired by [this package](https://github.com/flutter-moum/flutter_screenshot_callback).
 
 ## Getting Started
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
 
+- Import the package
+
+  ```dart
+  import 'package:screenshot_callback/screenshot_callback.dart';
+  ```
+
+- Create an `ScreenshotCallback` instance 
+
+  ```dart
+   final ScreenshotCallback screenshotCallback = ScreenshotCallback();
+  ```
+
+- Add an observer
+
+  ```dart
+   screenshotCallback.addListener(() {
+     		print('Taken screenshot')
+        exampleFunction();
+      });
+  ```
+
+- Dispose when done
+
+  ```dart
+    @override
+    void dispose() {
+      screenshotCallback.dispose();
+      super.dispose();
+    }
+  ```
+
+  
+
+## Author
+
+- glebosotov - gleb.osotov@gmail.com
