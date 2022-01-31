@@ -1,6 +1,6 @@
 name: screenshot_detect
-description: iOS-only screenshot detection.
-version: 1.0.2
+description: An iOS package for detecting when a user takes a screenshot and adding listeners to that action.
+version: 1.0.3
 homepage: https://github.com/glebosotov/flutter-screenshot-callback
 
 environment:
