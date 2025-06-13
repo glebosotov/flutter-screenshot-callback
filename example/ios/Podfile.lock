@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - screenshot_detect (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - screenshot_detect (from `.symlinks/plugins/screenshot_detect/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  screenshot_detect:
+    :path: ".symlinks/plugins/screenshot_detect/ios"
+
+SPEC CHECKSUMS:
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  screenshot_detect: 65a16a52013b46da518a933c9c2446dd57d9ee82
+
+PODFILE CHECKSUM: 456077b55072f236d787d8d8089432fa61358364
+
+COCOAPODS: 1.16.2

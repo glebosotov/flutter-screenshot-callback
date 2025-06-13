@@ -1,42 +1,44 @@
 import 'dart:async';
 
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-class ScreenshotDetect {
-  static const MethodChannel _channel = MethodChannel('screenshot_detect');
+import '../screenshot_detect.g.dart';
 
-  List<VoidCallback> callbacks = <VoidCallback>[];
+/// A service to detect when the user takes a screenshot.
+///
+/// Use [addListener] to register callbacks that are invoked when a screenshot is detected.
+class ScreenshotDetect implements ScreenshotDetectApi {
+  static final ScreenshotDetect _instance = ScreenshotDetect._internal();
+  final List<VoidCallback> _callbacks = <VoidCallback>[];
+  factory ScreenshotDetect() => _instance;
 
-  /// Calls the initializer function which adds `UIApplication.userDidTakeScreenshotNotification` observer (use `addListener(VoidCallback callback)` to run actions when user screenshots)
-  ScreenshotDetect() {
-    initialize();
+  ScreenshotDetect._internal() {
+    _initialize();
   }
 
-  /// Starts listening to screenshots (use `addListener(VoidCallback callback)` to run actions when user screenshots)
-  Future<void> initialize() async {
-    _channel.setMethodCallHandler(_handleMethod);
-    await _channel.invokeMethod('initialize');
-  }
-
-  /// Adds a [callback] function to be called when user screenshots
+  /// Adds a [callback] function to be called when the user takes a screenshot.
   void addListener(VoidCallback callback) {
-    callbacks.add(callback);
+    _callbacks.add(callback);
   }
 
-  /// Calls every method in [callbacks] when user screenshots
-  Future<dynamic> _handleMethod(MethodCall call) async {
-    switch (call.method) {
-      case 'onCallback':
-        for (final callback in callbacks) {
-          callback();
-        }
-        break;
-      default:
-        throw ('Undefined method ${call.method}');
+  @override
+  void didTakeScreenshot() {
+    for (final callback in List<VoidCallback>.from(_callbacks)) {
+      callback();
     }
   }
 
-  /// Stops listening for screenshots
-  Future<void> dispose() async => await _channel.invokeMethod('dispose');
+  /// Stops listening for screenshots and disposes resources.
+  Future<void> dispose() async {
+    _callbacks.clear();
+  }
+
+  /// Removes a previously added [callback].
+  void removeListener(VoidCallback callback) {
+    _callbacks.remove(callback);
+  }
+
+  /// Initializes the screenshot detection by setting up the method call handler
+  /// and invoking the native 'initialize' method.
+  void _initialize() => ScreenshotDetectApi.setUp(this);
 }
