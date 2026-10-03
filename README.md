@@ -130,7 +130,6 @@ flutter pub get
 flutter analyze
 flutter test
 cd example
-flutter test
 flutter run
 ```
 
