@@ -6,7 +6,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.embedding.engine.plugins.lifecycle.HiddenLifecycleReference
-import io.flutter.plugin.common.EventChannel
 import java.util.concurrent.Executor
 import org.junit.Before
 import org.junit.Test
@@ -32,7 +31,7 @@ class ScreenshotDetectPluginTest {
     private lateinit var activity: Activity
     private lateinit var lifecycle: Lifecycle
     private lateinit var binding: ActivityPluginBinding
-    private lateinit var sink: EventChannel.EventSink
+    private lateinit var sink: PigeonEventSink<ScreenshotEvent>
 
     @Before
     fun setUp() {
@@ -59,11 +58,11 @@ class ScreenshotDetectPluginTest {
         val callback = argumentCaptor<Activity.ScreenCaptureCallback>()
         verify(activity).registerScreenCaptureCallback(any(), callback.capture())
         callback.firstValue.onScreenCaptured()
-        verify(sink).success(null)
+        verify(sink).success(ScreenshotEvent.TAKEN)
         plugin.onCancel(null)
         verify(activity).unregisterScreenCaptureCallback(callback.firstValue)
         callback.firstValue.onScreenCaptured()
-        verify(sink, times(1)).success(null)
+        verify(sink, times(1)).success(ScreenshotEvent.TAKEN)
     }
 
     @Test

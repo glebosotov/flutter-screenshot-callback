@@ -4,13 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:screenshot_detect/screenshot_detect.dart';
+import 'package:screenshot_detect/screenshot_detect.g.dart' as pigeon;
 import 'package:screenshot_detect_example/main.dart';
 
 void main() {
   testWidgets('shows stream and callback events and resets both', (
     tester,
   ) async {
-    const channel = MethodChannel('screenshot_detect/events');
+    const channel = MethodChannel(
+      'dev.flutter.pigeon.screenshot_detect.ScreenshotDetectApi.screenshotEvents',
+      pigeon.pigeonMethodCodec,
+    );
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       channel,
       (_) async => null,

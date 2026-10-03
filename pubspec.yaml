@@ -11,11 +11,13 @@ dependencies:
     flutter:
         sdk: flutter
     flutter_plugin_android_lifecycle: ^2.0.35
+    meta: ^1.19.0
 
 dev_dependencies:
     flutter_test:
         sdk: flutter
     flutter_lints: ^6.0.0
+    pigeon: 29.0.6
 
 flutter:
     plugin:

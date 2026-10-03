@@ -3,7 +3,7 @@
 * Add broadcast `Stream<void> onScreenshot` alongside existing callbacks.
 * Add Android 14+ screenshot detection with activity lifecycle management and
   explicit errors on older Android versions.
-* Replace the generated Pigeon bridge with a shared, demand-driven event channel.
+* Keep Pigeon and generate demand-driven event channels for Dart, Swift, and Kotlin.
 * Fix iOS observer ownership, engine detach cleanup, and Dart listener disposal.
 * Isolate callback failures so other listeners still receive events.
 * **Breaking:** remove CocoaPods; iOS now uses Swift Package Manager only.

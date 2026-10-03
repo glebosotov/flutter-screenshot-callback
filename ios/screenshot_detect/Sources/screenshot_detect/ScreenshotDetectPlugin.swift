@@ -1,44 +1,40 @@
 import Flutter
 import UIKit
 
-public final class ScreenshotDetectPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
-    private var observer: NSObjectProtocol?
-    private var channel: FlutterEventChannel?
+public final class ScreenshotDetectPlugin: NSObject, FlutterPlugin {
+    private let screenshots = ScreenshotObserver()
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = ScreenshotDetectPlugin()
-        let channel = FlutterEventChannel(
-            name: "screenshot_detect/events",
-            binaryMessenger: registrar.messenger()
+        ScreenshotEventsStreamHandler.register(
+            with: registrar.messenger(), streamHandler: instance.screenshots
         )
-        instance.channel = channel
-        channel.setStreamHandler(instance)
         registrar.publish(instance)
     }
 
-    public func onListen(
-        withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink
-    ) -> FlutterError? {
+    public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
+        screenshots.onCancel(withArguments: nil)
+    }
+}
+
+private final class ScreenshotObserver: ScreenshotEventsStreamHandler {
+    private var observer: NSObjectProtocol?
+
+    override func onListen(
+        withArguments arguments: Any?, sink: PigeonEventSink<ScreenshotEvent>
+    ) {
         stopObserving()
         observer = NotificationCenter.default.addObserver(
             forName: UIApplication.userDidTakeScreenshotNotification,
             object: nil,
             queue: .main
         ) { _ in
-            events(nil)
+            sink.success(.taken)
         }
-        return nil
     }
 
-    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    override func onCancel(withArguments arguments: Any?) {
         stopObserving()
-        return nil
-    }
-
-    public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
-        stopObserving()
-        channel?.setStreamHandler(nil)
-        channel = nil
     }
 
     private func stopObserving() {

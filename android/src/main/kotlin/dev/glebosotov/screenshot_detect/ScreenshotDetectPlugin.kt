@@ -9,12 +9,10 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.embedding.engine.plugins.lifecycle.FlutterLifecycleAdapter
-import io.flutter.plugin.common.EventChannel
 
 /** Observes Android 14 screenshot events while the attached activity is visible. */
-class ScreenshotDetectPlugin : FlutterPlugin, ActivityAware, EventChannel.StreamHandler {
-    private var channel: EventChannel? = null
-    private var events: EventChannel.EventSink? = null
+class ScreenshotDetectPlugin : ScreenshotEventsStreamHandler(), FlutterPlugin, ActivityAware {
+    private var events: PigeonEventSink<ScreenshotEvent>? = null
     private var activity: Activity? = null
     private var lifecycle: Lifecycle? = null
     private var unregister: (() -> Unit)? = null
@@ -27,19 +25,15 @@ class ScreenshotDetectPlugin : FlutterPlugin, ActivityAware, EventChannel.Stream
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel = EventChannel(binding.binaryMessenger, "screenshot_detect/events").also {
-            it.setStreamHandler(this)
-        }
+        ScreenshotEventsStreamHandler.register(binding.binaryMessenger, this)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         detachActivity()
         events = null
-        channel?.setStreamHandler(null)
-        channel = null
     }
 
-    override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
+    override fun onListen(arguments: Any?, sink: PigeonEventSink<ScreenshotEvent>) {
         stopObserving()
         events = sink
         if (Build.VERSION.SDK_INT < 34) {
@@ -85,7 +79,7 @@ class ScreenshotDetectPlugin : FlutterPlugin, ActivityAware, EventChannel.Stream
         val sink = events ?: return
         try {
             unregister = Api34.register(currentActivity) {
-                events?.success(null)
+                events?.success(ScreenshotEvent.TAKEN)
             }
         } catch (error: SecurityException) {
             sink.error("permission_denied", error.message, null)

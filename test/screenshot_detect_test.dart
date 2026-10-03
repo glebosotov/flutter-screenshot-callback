@@ -4,11 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:screenshot_detect/screenshot_detect.dart';
+import 'package:screenshot_detect/screenshot_detect.g.dart' as pigeon;
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
-  const channel = MethodChannel('screenshot_detect/events');
-  const codec = StandardMethodCodec();
+  const channel = MethodChannel(
+    'dev.flutter.pigeon.screenshot_detect.ScreenshotDetectApi.screenshotEvents',
+    pigeon.pigeonMethodCodec,
+  );
+  const codec = pigeon.pigeonMethodCodec;
   late ScreenshotDetect detector;
   late List<String> calls;
 
@@ -19,7 +23,7 @@ void main() {
     binding.channelBuffers.push(
       channel.name,
       error == null
-          ? codec.encodeSuccessEnvelope(null)
+          ? codec.encodeSuccessEnvelope(pigeon.ScreenshotEvent.taken)
           : codec.encodeErrorEnvelope(
               code: 'unsupported_platform',
               message: '$error',

@@ -17,7 +17,12 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib test example/lib example/test
+      - name: Check generated bridge
+        run: |
+          dart run pigeon --input pigeon_config.dart
+          dart format lib/screenshot_detect.g.dart
+          git diff --exit-code -- lib/screenshot_detect.g.dart android/src/main/kotlin/dev/glebosotov/screenshot_detect/Messages.g.kt ios/screenshot_detect/Sources/screenshot_detect/Messages.g.swift
+      - run: dart format --output=none --set-exit-if-changed lib test pigeon_config.dart example/lib example/test
       - run: flutter analyze
       - run: flutter test
       - run: flutter test

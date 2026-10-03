@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+
+import 'screenshot_detect.g.dart' as pigeon;
 
 /// Detects screenshots using the operating system's screenshot notifications.
 ///
@@ -9,7 +10,7 @@ import 'package:flutter/services.dart';
 /// [addListener] for callbacks. Native observation runs only while needed.
 class ScreenshotDetect {
   static ScreenshotDetect? _instance;
-  static const _channel = EventChannel('screenshot_detect/events');
+  static final _nativeEvents = pigeon.screenshotEvents();
   static Future<void> _platformOperations = Future<void>.value();
 
   /// Returns the shared service, creating a new one after [dispose].
@@ -24,7 +25,7 @@ class ScreenshotDetect {
 
   final List<VoidCallback> _callbacks = <VoidCallback>[];
   late final StreamController<void> _events;
-  StreamSubscription<dynamic>? _subscription;
+  StreamSubscription<pigeon.ScreenshotEvent>? _subscription;
   bool _disposed = false;
   Future<void>? _disposal;
 
@@ -89,7 +90,7 @@ class ScreenshotDetect {
           final needed =
               !_disposed && (_events.hasListener || _callbacks.isNotEmpty);
           if (needed && _subscription == null) {
-            _subscription = _channel.receiveBroadcastStream().listen(
+            _subscription = _nativeEvents.listen(
               (_) => didTakeScreenshot(),
               onError: (Object error, StackTrace stack) {
                 if (_disposed) return;

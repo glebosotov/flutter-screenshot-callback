@@ -117,8 +117,8 @@ buttons. See [Android screenshot detection](https://developer.android.com/about/
   optional and can coexist with callbacks.
 - `dispose()` now releases native resources and closes streams. Obtain a fresh
   instance before registering new listeners after disposal.
-- The generated Pigeon implementation has been replaced with an event channel.
-  Do not import the removed `screenshot_detect.g.dart` internal file.
+- Pigeon now generates event channels for Dart, Swift, and Kotlin. Continue
+  importing `screenshot_detect.dart`; generated bridge types are internal.
 
 ## Example and development
 
@@ -132,6 +132,14 @@ flutter test
 cd example
 flutter test
 flutter run
+```
+
+The native bridge is defined in `pigeon_config.dart`. After changing it, regenerate
+all three checked-in outputs with the pinned Pigeon version:
+
+```sh
+dart run pigeon --input pigeon_config.dart
+dart format lib/screenshot_detect.g.dart
 ```
 
 Native build checks:
