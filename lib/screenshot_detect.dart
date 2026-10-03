@@ -27,7 +27,6 @@ class ScreenshotDetect {
   late final StreamController<void> _events;
   StreamSubscription<pigeon.ScreenshotEvent>? _subscription;
   bool _disposed = false;
-  Future<void>? _disposal;
 
   /// A broadcast stream emitting one void event after each screenshot.
   ///
@@ -74,13 +73,13 @@ class ScreenshotDetect {
   /// This affects all users of the shared instance. In a widget, prefer
   /// cancelling its subscription or removing its callback. Calling the factory
   /// again returns a fresh service. Paused listeners do not delay cleanup.
-  Future<void> dispose() {
-    if (_disposal != null) return _disposal!;
+  Future<void> dispose() async {
+    if (_disposed) return;
     _disposed = true;
     _callbacks.clear();
     if (identical(_instance, this)) _instance = null;
     unawaited(_events.close());
-    return _disposal = _updateSubscription();
+    await _updateSubscription();
   }
 
   Future<void> _updateSubscription() {

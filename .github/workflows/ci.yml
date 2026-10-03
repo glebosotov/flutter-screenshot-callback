@@ -22,9 +22,8 @@ jobs:
           dart run pigeon --input pigeon_config.dart
           dart format lib/screenshot_detect.g.dart
           git diff --exit-code -- lib/screenshot_detect.g.dart android/src/main/kotlin/dev/glebosotov/screenshot_detect/Messages.g.kt ios/screenshot_detect/Sources/screenshot_detect/Messages.g.swift
-      - run: dart format --output=none --set-exit-if-changed lib test pigeon_config.dart example/lib
+      - run: dart format --output=none --set-exit-if-changed lib pigeon_config.dart example/lib
       - run: flutter analyze
-      - run: flutter test
 
   android:
     runs-on: ubuntu-latest

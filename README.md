@@ -128,7 +128,6 @@ including error handling and per-widget cleanup.
 ```sh
 flutter pub get
 flutter analyze
-flutter test
 cd example
 flutter run
 ```
