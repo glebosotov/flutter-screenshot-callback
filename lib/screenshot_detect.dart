@@ -11,7 +11,6 @@ import 'screenshot_detect.g.dart' as pigeon;
 class ScreenshotDetect {
   static ScreenshotDetect? _instance;
   static final _nativeEvents = pigeon.screenshotEvents();
-  static Future<void> _platformOperations = Future<void>.value();
 
   /// Returns the shared service, creating a new one after [dispose].
   factory ScreenshotDetect() => _instance ??= ScreenshotDetect._();
@@ -78,37 +77,31 @@ class ScreenshotDetect {
     _disposed = true;
     _callbacks.clear();
     if (identical(_instance, this)) _instance = null;
-    unawaited(_events.close());
     await _updateSubscription();
+    unawaited(_events.close());
   }
 
-  Future<void> _updateSubscription() {
-    // Serialize cancellation and registration, including across dispose/recreate.
-    return _platformOperations = _platformOperations
-        .then((_) async {
-          final needed =
-              !_disposed && (_events.hasListener || _callbacks.isNotEmpty);
-          if (needed && _subscription == null) {
-            _subscription = _nativeEvents.listen(
-              (_) => didTakeScreenshot(),
-              onError: (Object error, StackTrace stack) {
-                if (_disposed) return;
-                if (_events.hasListener) {
-                  _events.addError(error, stack);
-                } else {
-                  _reportError(error, stack);
-                }
-              },
-            );
-          } else if (!needed && _subscription != null) {
-            final subscription = _subscription!;
-            _subscription = null;
-            await subscription.cancel();
-          }
-        })
-        .catchError((Object error, StackTrace stack) {
-          _reportError(error, stack);
-        });
+  Future<void> _updateSubscription() async {
+    if (_disposed || (!_events.hasListener && _callbacks.isEmpty)) {
+      final subscription = _subscription;
+      _subscription = null;
+      await subscription?.cancel();
+      return;
+    }
+
+    _subscription ??= _nativeEvents.listen(
+      (_) => didTakeScreenshot(),
+      onError: _onError,
+    );
+  }
+
+  void _onError(Object error, StackTrace stack) {
+    if (_disposed) return;
+    if (_events.hasListener) {
+      _events.addError(error, stack);
+    } else {
+      _reportError(error, stack);
+    }
   }
 
   static void _reportError(Object error, StackTrace stack) {
