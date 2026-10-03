@@ -29,7 +29,6 @@ class _ScreenshotPageState extends State<ScreenshotPage> {
   final _detector = ScreenshotDetect();
   StreamSubscription<void>? _subscription;
   int _streamCount = 0;
-  int _callbackCount = 0;
   String? _error;
 
   @override
@@ -39,14 +38,10 @@ class _ScreenshotPageState extends State<ScreenshotPage> {
       (_) => setState(() => _streamCount++),
       onError: (Object error) => setState(() => _error = error.toString()),
     );
-    _detector.addListener(_onScreenshot);
   }
-
-  void _onScreenshot() => setState(() => _callbackCount++);
 
   @override
   void dispose() {
-    _detector.removeListener(_onScreenshot);
     unawaited(_subscription?.cancel());
     super.dispose();
   }
@@ -75,7 +70,6 @@ class _ScreenshotPageState extends State<ScreenshotPage> {
               ),
               const SizedBox(height: 24),
               Text('Stream events: $_streamCount'),
-              Text('Callback events: $_callbackCount'),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -87,9 +81,8 @@ class _ScreenshotPageState extends State<ScreenshotPage> {
               FilledButton.tonal(
                 onPressed: () => setState(() {
                   _streamCount = 0;
-                  _callbackCount = 0;
                 }),
-                child: const Text('Reset counters'),
+                child: const Text('Reset counter'),
               ),
             ],
           ),

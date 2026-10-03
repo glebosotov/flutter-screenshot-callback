@@ -1,8 +1,8 @@
 # Screenshot detection example
 
-Demonstrates simultaneous stream and callback listeners, native error handling,
-and subscription cleanup. Take a screenshot with the device buttons to increment
-both counters; use **Reset counters** to clear them.
+Demonstrates screenshot stream events, native error handling, and subscription
+cleanup. Take a screenshot with the device buttons to increment the counter;
+use **Reset counter** to clear it.
 
 ```sh
 flutter pub get

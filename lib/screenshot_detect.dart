@@ -6,8 +6,8 @@ import 'screenshot_detect.g.dart' as pigeon;
 
 /// Detects screenshots using the operating system's screenshot notifications.
 ///
-/// Instances share one service. Use [onScreenshot] for stream subscriptions or
-/// [addListener] for callbacks. Native observation runs only while needed.
+/// Instances share one service. Use [onScreenshot] for stream subscriptions.
+/// Native observation runs only while needed.
 class ScreenshotDetect {
   static ScreenshotDetect? _instance;
   static final _screenshots = pigeon.screenshotEvents().map<void>((_) {});
@@ -32,6 +32,7 @@ class ScreenshotDetect {
   /// Registers [callback]. Registering it twice produces two invocations.
   ///
   /// Throws a [StateError] if this service has been disposed.
+  @Deprecated('Use onScreenshot.listen instead.')
   void addListener(VoidCallback callback) {
     if (_disposed) {
       throw StateError('This ScreenshotDetect has been disposed.');
@@ -47,6 +48,9 @@ class ScreenshotDetect {
   }
 
   /// Removes one registration of [callback]. Missing callbacks are ignored.
+  @Deprecated(
+    'Cancel the subscription returned by onScreenshot.listen instead.',
+  )
   void removeListener(VoidCallback callback) {
     final index = _callbacks.indexWhere((entry) => entry.callback == callback);
     if (index != -1) {

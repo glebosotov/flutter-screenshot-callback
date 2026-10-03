@@ -1,6 +1,6 @@
 # screenshot_detect
 
-Native screenshot detection for Flutter, with a broadcast stream and callbacks.
+Native screenshot detection for Flutter, with a broadcast stream.
 Supports iOS and Android 14+ without reading the photo library or screenshot files.
 
 ## Requirements
@@ -53,9 +53,10 @@ and are not replayed to new listeners. Pausing a subscription buffers its events
 use cancellation to stop consuming events and release observation when no other
 listeners remain.
 
-## Callbacks
+## Callbacks (deprecated)
 
-The existing callback API remains available:
+`addListener` and `removeListener` are deprecated. Use `onScreenshot.listen` and
+cancel the returned subscription instead. Existing callbacks still work:
 
 ```dart
 final detector = ScreenshotDetect();
@@ -113,8 +114,9 @@ buttons. See [Android screenshot detection](https://developer.android.com/about/
 
 - Move iOS builds to Swift Package Manager; the podspec and CocoaPods bridge were
   removed. Update Flutter and the iOS deployment target to the requirements above.
-- Existing `addListener` / `removeListener` calls continue to work. Streams are
-  optional and can coexist with callbacks.
+- Existing `addListener` / `removeListener` calls continue to work but are
+  deprecated. Migrate to `onScreenshot.listen` and cancel the returned subscription
+  when finished.
 - `dispose()` removes all callbacks. Obtain a fresh instance before registering
   new callbacks after disposal. Cancel stream subscriptions separately.
 - The old Pigeon bridge method `didTakeScreenshot()` has been removed.
@@ -123,8 +125,8 @@ buttons. See [Android screenshot detection](https://developer.android.com/about/
 
 ## Example and development
 
-The [example](example) displays stream and callback event counts side by side,
-including error handling and per-widget cleanup.
+The [example](example) counts screenshot stream events, including error handling
+and per-widget subscription cleanup.
 
 ```sh
 flutter pub get

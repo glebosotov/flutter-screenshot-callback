@@ -2,6 +2,7 @@
 
 * Add broadcast `Stream<void> onScreenshot` alongside existing callbacks.
   Callbacks subscribe to the same Pigeon stream; stream consumers own cancellation.
+* Deprecate `addListener` and `removeListener` in favor of stream subscriptions.
 * Add Android 14+ screenshot detection with activity lifecycle management and
   explicit errors on older Android versions.
 * Keep Pigeon and generate demand-driven event channels for Dart, Swift, and Kotlin.
