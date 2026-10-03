@@ -72,7 +72,7 @@ detector.removeListener(onScreenshot);
 Keep the callback reference so it can be removed. Duplicate registrations are
 allowed; each `removeListener` removes one registration. Callback exceptions are
 reported through `FlutterError` without suppressing other listeners. Native errors
-also go to `FlutterError` when only callbacks are registered; stream subscribers
+also go to `FlutterError` for callback registrations; stream subscribers
 can handle them through `onError`.
 
 ## Lifecycle
@@ -81,12 +81,12 @@ can handle them through `onError`.
 stream listener or callback and stops after the last one is removed. Cancelling
 one subscription does not affect other consumers.
 
-Use `await detector.dispose()` only when intentionally releasing the **whole
-shared service**. It removes callbacks, stops native observation, and closes the
-stream. Disposal is idempotent and does not wait for paused subscriptions to resume.
-A subsequent `ScreenshotDetect()` returns a fresh service; old instances stay
-disposed and reject new callbacks. For widget cleanup, cancel the widget's stream
-subscription and/or remove its callback instead.
+`await detector.dispose()` removes all callbacks from the shared service. Stream
+subscriptions are independent: each consumer must cancel its own subscription.
+Native observation stops once no subscriptions or callbacks remain.
+Disposal is idempotent. A subsequent `ScreenshotDetect()` returns a fresh service;
+old instances reject new callbacks. For widget cleanup, cancel the widget's stream
+subscription and/or remove its callback.
 
 On Android, observation stops when the activity stops and resumes when it starts.
 Activity recreation and engine detach release the old registration. On iOS,
@@ -115,8 +115,9 @@ buttons. See [Android screenshot detection](https://developer.android.com/about/
   removed. Update Flutter and the iOS deployment target to the requirements above.
 - Existing `addListener` / `removeListener` calls continue to work. Streams are
   optional and can coexist with callbacks.
-- `dispose()` now releases native resources and closes streams. Obtain a fresh
-  instance before registering new listeners after disposal.
+- `dispose()` removes all callbacks. Obtain a fresh instance before registering
+  new callbacks after disposal. Cancel stream subscriptions separately.
+- The old Pigeon bridge method `didTakeScreenshot()` has been removed.
 - Pigeon now generates event channels for Dart, Swift, and Kotlin. Continue
   importing `screenshot_detect.dart`; generated bridge types are internal.
 

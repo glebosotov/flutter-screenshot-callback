@@ -10,29 +10,24 @@ import 'screenshot_detect.g.dart' as pigeon;
 /// [addListener] for callbacks. Native observation runs only while needed.
 class ScreenshotDetect {
   static ScreenshotDetect? _instance;
-  static final _nativeEvents = pigeon.screenshotEvents();
+  static final _screenshots = pigeon.screenshotEvents().map<void>((_) {});
 
   /// Returns the shared service, creating a new one after [dispose].
   factory ScreenshotDetect() => _instance ??= ScreenshotDetect._();
 
-  ScreenshotDetect._() {
-    _events = StreamController<void>.broadcast(
-      onListen: _updateSubscription,
-      onCancel: _updateSubscription,
-    );
-  }
+  ScreenshotDetect._();
 
-  final List<VoidCallback> _callbacks = <VoidCallback>[];
-  late final StreamController<void> _events;
-  StreamSubscription<pigeon.ScreenshotEvent>? _subscription;
+  final _callbacks =
+      <({VoidCallback callback, StreamSubscription<void> subscription})>[];
   bool _disposed = false;
 
   /// A broadcast stream emitting one void event after each screenshot.
   ///
   /// Multiple subscriptions and callbacks can coexist. Events are not replayed.
   /// Cancel your subscription when its owner is disposed. Native errors are
-  /// forwarded to stream listeners; callback-only users receive Flutter errors.
-  Stream<void> get onScreenshot => _events.stream;
+  /// forwarded to stream listeners; callbacks report them through FlutterError.
+  /// Calling [dispose] does not cancel these subscriptions.
+  Stream<void> get onScreenshot => _screenshots;
 
   /// Registers [callback]. Registering it twice produces two invocations.
   ///
@@ -41,67 +36,37 @@ class ScreenshotDetect {
     if (_disposed) {
       throw StateError('This ScreenshotDetect has been disposed.');
     }
-    _callbacks.add(callback);
-    _updateSubscription();
-  }
-
-  /// Removes one registration of [callback]. Missing callbacks are ignored.
-  void removeListener(VoidCallback callback) {
-    _callbacks.remove(callback);
-    _updateSubscription();
-  }
-
-  /// Dispatches a screenshot notification to current listeners.
-  ///
-  /// Kept for compatibility. Applications normally receive native events.
-  void didTakeScreenshot() {
-    if (_disposed) return;
-    _events.add(null);
-    for (final callback in List<VoidCallback>.of(_callbacks)) {
-      if (_disposed) break;
+    final subscription = onScreenshot.listen((_) {
       try {
         callback();
       } catch (error, stack) {
         _reportError(error, stack);
       }
+    }, onError: _reportError);
+    _callbacks.add((callback: callback, subscription: subscription));
+  }
+
+  /// Removes one registration of [callback]. Missing callbacks are ignored.
+  void removeListener(VoidCallback callback) {
+    final index = _callbacks.indexWhere((entry) => entry.callback == callback);
+    if (index != -1) {
+      unawaited(_callbacks.removeAt(index).subscription.cancel());
     }
   }
 
-  /// Releases the shared service and closes its stream. Safe to call twice.
+  /// Removes all callbacks from the shared service. Safe to call twice.
   ///
-  /// This affects all users of the shared instance. In a widget, prefer
-  /// cancelling its subscription or removing its callback. Calling the factory
-  /// again returns a fresh service. Paused listeners do not delay cleanup.
+  /// Stream consumers must cancel their own subscriptions. In a widget, prefer
+  /// removing its callback. Calling the factory again returns a fresh service.
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    _callbacks.clear();
     if (identical(_instance, this)) _instance = null;
-    await _updateSubscription();
-    unawaited(_events.close());
-  }
-
-  Future<void> _updateSubscription() async {
-    if (_disposed || (!_events.hasListener && _callbacks.isEmpty)) {
-      final subscription = _subscription;
-      _subscription = null;
-      await subscription?.cancel();
-      return;
-    }
-
-    _subscription ??= _nativeEvents.listen(
-      (_) => didTakeScreenshot(),
-      onError: _onError,
-    );
-  }
-
-  void _onError(Object error, StackTrace stack) {
-    if (_disposed) return;
-    if (_events.hasListener) {
-      _events.addError(error, stack);
-    } else {
-      _reportError(error, stack);
-    }
+    final cancellations = _callbacks
+        .map((entry) => entry.subscription.cancel())
+        .toList();
+    _callbacks.clear();
+    await Future.wait(cancellations);
   }
 
   static void _reportError(Object error, StackTrace stack) {
