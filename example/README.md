@@ -1,16 +1,21 @@
-# screenshot_detect_example
+# Screenshot detection example
 
-Demonstrates how to use the screenshot_detect plugin.
+Demonstrates screenshot stream events, native error handling, and subscription
+cleanup. Take a screenshot with the device buttons to increment the counter;
+use **Reset counter** to clear it.
 
-## Getting Started
+```sh
+flutter pub get
+flutter run
+```
 
-This project is a starting point for a Flutter application.
+Requires Flutter 3.44+. iOS uses Swift Package Manager only. Android detection
+requires Android 14+ and shows the system screenshot-detection notice. Older
+Android versions display the plugin's unsupported-platform error.
 
-A few resources to get you started if this is your first Flutter project:
+No screenshot image is read or captured by this example.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The Xcode project includes the plugin's `Package.swift` as a source reference,
+while Flutter's generated package supplies the dependency. This avoids creating a
+second local-package identity when the checkout directory differs from the Dart
+package name.

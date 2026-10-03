@@ -1,44 +1,161 @@
 # screenshot_detect
 
-This is an iOS-only plugin for detecting when user takes a screenshot through `UIApplication.userDidTakeScreenshotNotification`. It was heavily inspired by [this package](https://github.com/flutter-moum/flutter_screenshot_callback).
+Native screenshot detection for Flutter, with a broadcast stream.
+Supports iOS and Android 14+ without reading the photo library or screenshot files.
 
-## Getting Started
+## Requirements
 
+- Flutter 3.44+ and Dart 3.8.1+.
+- iOS 15+, Xcode with Swift 5.9+, and **Swift Package Manager enabled**.
+  CocoaPods is no longer supported.
+- Android: compile SDK 36 and Java 17. Apps can run on API 24+, but screenshot
+  detection requires Android 14 (API 34) or later.
 
+## Install
 
-- Import the package
+```sh
+flutter pub add screenshot_detect
+```
 
-  ```dart
-  import 'package:screenshot_detect/screenshot_detect.dart';
-  ```
+For iOS, Flutter integrates the Swift package during the app build. If your app
+previously disabled Swift Package Manager, enable it with
+`flutter config --enable-swift-package-manager` and remove any app-level override
+that disables it. See [Flutter's migration guide](https://docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers).
 
-- Create a `ScreenshotDetect` instance 
+On Android, the plugin manifest adds `android.permission.DETECT_SCREEN_CAPTURE`.
+This is an install-time permission; no runtime permission dialog or storage access
+is needed. Android displays a system notice when your app detects a screenshot.
 
-  ```dart
-   final ScreenshotDetect screenshotDetect = ScreenshotDetect();
-  ```
+## Streams
 
-- Add an observer
+```dart
+import 'dart:async';
+import 'package:screenshot_detect/screenshot_detect.dart';
 
-  ```dart
-   screenshotDetect.addListener(() {
-     		print('Taken screenshot')
-        exampleFunction();
-      });
-  ```
+final detector = ScreenshotDetect();
+final StreamSubscription<void> subscription = detector.onScreenshot.listen(
+  (_) {
+    // React to a screenshot. The event does not contain an image or file path.
+  },
+  onError: (Object error) {
+    // For example, PlatformException with code `unsupported_platform`
+    // on Android versions below 14.
+  },
+);
 
-- Dispose when done
+// When this consumer is finished:
+await subscription.cancel();
+```
 
-  ```dart
-    @override
-    void dispose() {
-      screenshotDetect.dispose();
-      super.dispose();
-    }
-  ```
+`onScreenshot` is a broadcast `Stream<void>`. Multiple subscriptions and callbacks
+share one native observer. Events are delivered asynchronously to stream listeners
+and are not replayed to new listeners. Pausing a subscription buffers its events;
+use cancellation to stop consuming events and release observation when no other
+listeners remain.
 
-  
+## Callbacks (deprecated)
+
+`addListener` and `removeListener` are deprecated. Use `onScreenshot.listen` and
+cancel the returned subscription instead. Existing callbacks still work:
+
+```dart
+final detector = ScreenshotDetect();
+void onScreenshot() {
+  // React to a screenshot.
+}
+
+detector.addListener(onScreenshot);
+
+// In your widget/controller's dispose method:
+detector.removeListener(onScreenshot);
+```
+
+Keep the callback reference so it can be removed. Duplicate registrations are
+allowed; each `removeListener` removes one registration. Callback exceptions are
+reported through `FlutterError` without suppressing other listeners. Native errors
+also go to `FlutterError` for callback registrations; stream subscribers
+can handle them through `onError`.
+
+## Lifecycle
+
+`ScreenshotDetect()` returns a shared service. Observation starts with the first
+stream listener or callback and stops after the last one is removed. Cancelling
+one subscription does not affect other consumers.
+
+`await detector.dispose()` removes all callbacks from the shared service. Stream
+subscriptions are independent: each consumer must cancel its own subscription.
+Native observation stops once no subscriptions or callbacks remain.
+Disposal is idempotent. A subsequent `ScreenshotDetect()` returns a fresh service;
+old instances reject new callbacks. For widget cleanup, cancel the widget's stream
+subscription and/or remove its callback.
+
+On Android, observation stops when the activity stops and resumes when it starts.
+Activity recreation and engine detach release the old registration. On iOS,
+observers are scoped to each Flutter engine and removed on cancellation or detach.
+
+## Platform behavior and limits
+
+| Platform | Behavior |
+| --- | --- |
+| iOS 15+ | Uses `UIApplication.userDidTakeScreenshotNotification`. |
+| Android 14+ | Uses `Activity.ScreenCaptureCallback` while the activity is visible. |
+| Android 7–13 | Emits `PlatformException(code: 'unsupported_platform')` when observation starts. |
+| Other platforms | No native implementation. |
+
+Notifications arrive **after** a screenshot. This plugin does not prevent capture,
+provide the captured image, or detect screen recording. Apple documents the
+notification timing in [UIKit's screenshot notification](https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification).
+
+Android's documented detection covers hardware-button screenshots. ADB and
+instrumentation screenshots do not trigger it; test with device screenshot
+buttons. See [Android screenshot detection](https://developer.android.com/about/versions/14/features/screenshot-detection).
+
+## Migrating from 1.x
+
+- Move iOS builds to Swift Package Manager; the podspec and CocoaPods bridge were
+  removed. Update Flutter and the iOS deployment target to the requirements above.
+- Existing `addListener` / `removeListener` calls continue to work but are
+  deprecated. Migrate to `onScreenshot.listen` and cancel the returned subscription
+  when finished.
+- `dispose()` removes all callbacks. Obtain a fresh instance before registering
+  new callbacks after disposal. Cancel stream subscriptions separately.
+- The old Pigeon bridge method `didTakeScreenshot()` has been removed.
+- Pigeon now generates event channels for Dart, Swift, and Kotlin. Continue
+  importing `screenshot_detect.dart`; generated bridge types are internal.
+
+## Example and development
+
+The [example](example) counts screenshot stream events, including error handling
+and per-widget subscription cleanup.
+
+```sh
+flutter pub get
+flutter analyze
+cd example
+flutter run
+```
+
+The native bridge is defined in `pigeon_config.dart`. After changing it, regenerate
+all three checked-in outputs with the pinned Pigeon version:
+
+```sh
+dart run pigeon --input pigeon_config.dart
+dart format lib/screenshot_detect.g.dart
+```
+
+Native build checks:
+
+```sh
+cd example
+flutter build ios --simulator --debug --no-codesign
+flutter build apk --debug
+cd android
+./gradlew :screenshot_detect:testDebugUnitTest
+```
+
+Verify real screenshot delivery, background/foreground transitions, rotation, and
+multiple listeners on physical iOS and Android 14+ devices before release.
 
 ## Author
 
-- glebosotov - gleb.osotov@gmail.com
+Gleb Osotov — gleb.osotov@gmail.com

@@ -3,14 +3,18 @@ import 'package:pigeon/pigeon.dart';
 @ConfigurePigeon(
   PigeonOptions(
     dartOut: 'lib/screenshot_detect.g.dart',
-    dartOptions: DartOptions(),
-    objcHeaderOut: 'ios/Classes/messages.g.h',
-    objcSourceOut: 'ios/Classes/messages.g.m',
+    kotlinOut:
+        'android/src/main/kotlin/dev/glebosotov/screenshot_detect/Messages.g.kt',
+    kotlinOptions: KotlinOptions(package: 'dev.glebosotov.screenshot_detect'),
+    swiftOut:
+        'ios/screenshot_detect/Sources/screenshot_detect/Messages.g.swift',
     dartPackageName: 'screenshot_detect',
   ),
 )
-@FlutterApi()
+enum ScreenshotEvent { taken }
+
+@EventChannelApi()
 abstract class ScreenshotDetectApi {
-  /// Called when the user takes a screenshot
-  void didTakeScreenshot();
+  /// Emits after the operating system reports a screenshot.
+  ScreenshotEvent screenshotEvents();
 }

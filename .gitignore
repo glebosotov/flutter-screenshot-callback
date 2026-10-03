@@ -5,3 +5,12 @@
 .pub/
 
 build/
+
+.build/
+.swiftpm/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+**/local.properties
+.gradle/

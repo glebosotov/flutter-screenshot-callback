@@ -1,3 +1,19 @@
+## 2.0.0
+
+* Add broadcast `Stream<void> onScreenshot` alongside existing callbacks.
+  Callbacks subscribe to the same Pigeon stream; stream consumers own cancellation.
+* Deprecate `addListener` and `removeListener` in favor of stream subscriptions.
+* Add Android 14+ screenshot detection with activity lifecycle management and
+  explicit errors on older Android versions.
+* Keep Pigeon and generate demand-driven event channels for Dart, Swift, and Kotlin.
+* Fix iOS observer ownership, engine detach cleanup, and Dart listener disposal.
+* Isolate callback failures so other listeners still receive events.
+* **Breaking:** remove CocoaPods; iOS now uses Swift Package Manager only.
+* **Breaking:** require Flutter 3.44+ and iOS 15+. Disposed service instances reject
+  new callbacks; calling `ScreenshotDetect()` again creates a fresh shared service.
+  Remove the old Pigeon bridge method `didTakeScreenshot()`.
+* Refresh the example, documentation, tests, Android host, and CI build checks.
+
 ## 1.0.4
 
 * Up dependencies

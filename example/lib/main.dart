@@ -1,139 +1,93 @@
 import 'dart:async';
-import 'dart:developer';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:screenshot_detect/screenshot_detect.dart';
 
-void main() {
-  runApp(const ScreenshotApp());
-}
+void main() => runApp(const ScreenshotApp());
 
-/// Controller to handle screenshot detection and image capture
-class ScreenshotController {
-  final ScreenshotDetect _screenshotDetect = ScreenshotDetect();
-  final GlobalKey repaintKey = GlobalKey();
-  final ValueNotifier<Uint8List?> latestImage = ValueNotifier<Uint8List?>(null);
-  StreamSubscription? _subscription;
-
-  void init() {
-    _screenshotDetect.addListener(_onScreenshot);
-  }
-
-  void dispose() {
-    _screenshotDetect.dispose();
-    _subscription?.cancel();
-    latestImage.dispose();
-  }
-
-  void _onScreenshot() {
-    _captureScreenshot();
-  }
-
-  Future<void> _captureScreenshot() async {
-    try {
-      final context = repaintKey.currentContext;
-      if (context == null || !context.mounted) return;
-      final boundary = context.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return;
-      final image = await boundary.toImage();
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-      latestImage.value = byteData.buffer.asUint8List();
-    } catch (e) {
-      log(e.toString());
-    }
-  }
-
-  void resetImage() {
-    latestImage.value = null;
-  }
-}
-
-class ScreenshotApp extends StatefulWidget {
+class ScreenshotApp extends StatelessWidget {
   const ScreenshotApp({super.key});
-
-  @override
-  State<ScreenshotApp> createState() => _ScreenshotAppState();
-}
-
-class _ScreenshotAppState extends State<ScreenshotApp> {
-  late final ScreenshotController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = ScreenshotController();
-    _controller.init();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: RepaintBoundary(
-        key: _controller.repaintKey,
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.indigoAccent,
-            title: const Text('Screenshot callback demo'),
-          ),
-          body: ScreenshotDisplay(controller: _controller),
-        ),
-      ),
+      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      home: const ScreenshotPage(),
     );
   }
 }
 
-class ScreenshotDisplay extends StatelessWidget {
-  final ScreenshotController controller;
-  const ScreenshotDisplay({super.key, required this.controller});
+class ScreenshotPage extends StatefulWidget {
+  const ScreenshotPage({super.key});
+
+  @override
+  State<ScreenshotPage> createState() => _ScreenshotPageState();
+}
+
+class _ScreenshotPageState extends State<ScreenshotPage> {
+  final _detector = ScreenshotDetect();
+  StreamSubscription<void>? _subscription;
+  int _streamCount = 0;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscription = _detector.onScreenshot.listen(
+      (_) => setState(() => _streamCount++),
+      onError: (Object error) => setState(() => _error = error.toString()),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_subscription?.cancel());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Center(
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black54, width: 3),
-                borderRadius: BorderRadius.circular(20),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Screenshot detection')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.screenshot, size: 72),
+              const SizedBox(height: 24),
+              Text(
+                'Take a screenshot',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              height: 400,
-              child: ValueListenableBuilder<Uint8List?>(
-                valueListenable: controller.latestImage,
-                builder: (context, image, _) {
-                  if (image == null) {
-                    return const Text(
-                      "Take a screenshot and it will show up here",
-                    );
-                  }
-                  return Image.memory(image);
-                },
+              const SizedBox(height: 12),
+              const Text(
+                'Use the device screenshot buttons. On Android 14+, the system '
+                'will notify you that this app detected the screenshot.',
+                textAlign: TextAlign.center,
               ),
-            ),
+              const SizedBox(height: 24),
+              Text('Stream events: $_streamCount'),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 24),
+              FilledButton.tonal(
+                onPressed: () => setState(() {
+                  _streamCount = 0;
+                }),
+                child: const Text('Reset counter'),
+              ),
+            ],
           ),
         ),
-        TextButton(
-          onPressed: controller.resetImage,
-          child: const Text(
-            "Reset image",
-            style: TextStyle(color: Colors.indigoAccent),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
